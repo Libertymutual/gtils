@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -45,6 +46,19 @@ func NewRemoteExecutor(sshCfg SshConfig) (executor Executer, err error) {
 		Auth: []ssh.AuthMethod{
 			ssh.Password(sshCfg.Password),
 		},
+	}
+	// If Password exists as a file
+	pemBytes, err := ioutil.ReadFile(sshCfg.Password)
+	if err == nil {
+		signer, err := ssh.ParsePrivateKey(pemBytes)
+		if err == nil {
+			clientconfig = &ssh.ClientConfig{
+				User: sshCfg.Username,
+				Auth: []ssh.AuthMethod{
+					ssh.PublicKeys(signer),
+				},
+			}
+		}
 	}
 	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sshCfg.Host, sshCfg.Port), clientconfig)
 	if err != nil {
