@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -68,6 +69,22 @@ var _ = Describe("Ssh", func() {
 			CloseSuccess:  true}
 		client = &mockClient{session: session}
 
+	})
+
+	Describe("Client setup", func() {
+		var executer Executer
+		var err error
+		Context("to PCFPSQL host as root with valid password", func() {
+			It("should start successfully", func() {
+				executer, err = NewRemoteExecutor(SshConfig{
+					Username: os.Getenv("PCFPSQL_ENV_SSH_USER"),
+					Password: os.Getenv("PCFPSQL_ENV_SSH_PASS"),
+					Host:     os.Getenv("PCFPSQL_PORT_22_TCP_ADDR"),
+					Port:     22,
+				})
+				Ω(err).ShouldNot(HaveOccurred())
+			})
+		})
 	})
 
 	Describe("Session Run success", func() {
